@@ -2,6 +2,8 @@ package com.app.history.reader;
 
 import com.app.utils.Result;
 import com.app.utils.StockError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -11,6 +13,7 @@ import java.util.stream.Stream;
 
 public class CsvMovementReader implements MovementReader {
     private final String csvFile;
+    private static final Logger LOGGER = LoggerFactory.getLogger(CsvMovementReader.class);
 
     public CsvMovementReader(String csvFile) {
         this.csvFile = csvFile;
@@ -18,11 +21,14 @@ public class CsvMovementReader implements MovementReader {
 
     @Override
     public Result<MovementStream, StockError> readMovements() {
+        LOGGER.info("Reading movement CSV: {}", csvFile);
         Path filePath = Path.of(csvFile);
         try {
-            try (BufferedReader reader = Files.newBufferedReader(filePath)) {
+            BufferedReader reader = Files.newBufferedReader(filePath);
                 String firstLine = reader.readLine();
                 if (firstLine == null) {
+                    reader.close();
+                    LOGGER.info("Movement CSV {} is empty", csvFile);
                     return Result.success(new MovementStream(Stream.empty()));
                 }
                 Stream<String> lines = reader.lines();
@@ -30,8 +36,8 @@ public class CsvMovementReader implements MovementReader {
                     lines = Stream.concat(Stream.of(firstLine), lines);
                 }
                 return Result.success(new MovementStream(lines));
-            }
         } catch (IOException e) {
+            LOGGER.error("Failed to read movement CSV: {}", csvFile, e);
             return Result.failure(StockError.parseError(csvFile, "Failed to read CSV file: " + e.getMessage()));
         }
     }

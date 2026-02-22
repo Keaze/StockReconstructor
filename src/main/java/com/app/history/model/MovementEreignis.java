@@ -8,5 +8,5 @@ public enum MovementEreignis {
     WAREIN,
     MGKOZU,
     MGKOAB,
-    INVZH
+    INVZHL
 }

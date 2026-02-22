@@ -5,6 +5,8 @@ import com.app.stock.model.StockRecord;
 import com.app.stock.model.StockRecordFactory;
 import com.app.utils.Result;
 import com.app.utils.StockError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -24,6 +26,7 @@ import static com.app.utils.CsvFieldUtils.*;
 
 public class CsvStockIO implements StockIO {
     private final String csvFile;
+    private static final Logger LOGGER = LoggerFactory.getLogger(CsvStockIO.class);
 
     public CsvStockIO(String csvFile) {
         this.csvFile = csvFile;
@@ -52,11 +55,13 @@ public class CsvStockIO implements StockIO {
 
     @Override
     public Result<StockData, StockError> readStocks() {
+        LOGGER.info("Reading stock CSV: {}", csvFile);
         Path filePath = Path.of(csvFile);
         try {
             try (BufferedReader reader = Files.newBufferedReader(filePath)) {
                 String firstLine = reader.readLine();
                 if (firstLine == null) {
+                    LOGGER.info("Stock CSV {} is empty", csvFile);
                     return Result.success(new StockData(Map.of()));
                 }
                 Stream<String> stream = reader.lines();
@@ -71,11 +76,14 @@ public class CsvStockIO implements StockIO {
                                 Result::getOrThrow,
                                 (existing, replacement) -> existing
                         ));
+                LOGGER.info("Loaded {} stock records from {}", stockRecordMap.size(), csvFile);
                 return Result.success(new StockData(stockRecordMap));
             }
         } catch (IOException e) {
+            LOGGER.error("Failed to read stock CSV: {}", csvFile, e);
             return Result.failure(StockError.parseError(csvFile, "Failed to read CSV file: " + e.getMessage()));
         } catch (Exception e) {
+            LOGGER.error("Unexpected error reading stock CSV: {}", csvFile, e);
             return Result.failure(StockError.parseError(csvFile, "Unexpected error reading CSV file: " + e.getMessage()));
         }
     }
@@ -86,6 +94,7 @@ public class CsvStockIO implements StockIO {
             return Result.failure(StockError.writingError(path, "Stock data is null"));
         }
         try {
+            LOGGER.info("Writing stock output to {}", path);
             Path directory = Path.of(path);
             Files.createDirectories(directory);
             String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
@@ -110,10 +119,16 @@ public class CsvStockIO implements StockIO {
                 }
             }
 
+            LOGGER.info("Wrote {} stock records to {}", stockData.getStockRecords().size(), stockFile);
+            if (!stockData.getErrors().isEmpty()) {
+                LOGGER.warn("Wrote {} error records to {}", stockData.getErrors().size(), errorFile);
+            }
             return Result.success(null);
         } catch (IOException e) {
+            LOGGER.error("Failed to write stock output to {}", path, e);
             return Result.failure(StockError.writingError(path, "Failed to write output files: " + e.getMessage()));
         } catch (Exception e) {
+            LOGGER.error("Unexpected error writing stock output to {}", path, e);
             return Result.failure(StockError.writingError(path, "Unexpected error writing output files: " + e.getMessage()));
         }
     }

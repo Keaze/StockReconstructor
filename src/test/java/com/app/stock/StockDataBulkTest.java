@@ -322,13 +322,267 @@ class StockDataBulkTest {
 
         StockData stockData = new StockData(List.of(stockRecord));
         movementRecords.forEach(movement -> stockData.handleMovement(Result.success(movement)));
-
+        stockData.cleanUp();
         assertNotNull(stockData.getStockRecord(9926874));
         assertThat(stockData.getErrors()).isEmpty();
         assertThat(stockData.getStockRecord(9926874).getMengeIst()).isEqualByComparingTo(BigDecimal.valueOf(408.00));
         assertThat(stockData.getStockRecord(9926874).getLhmNr()).isEqualTo("3000026061");
         assertThat(stockData.getStockRecord(9926874).getPalNr()).isEqualTo("3000026061");
         assertThat(stockData.getStockRecord(9926874).getPlatz()).isEqualTo("001BC0000600");
+    }
+
+    @Test
+    void testBulkLoeschSequence() {
+        List<MovementRecord> movementRecords = List.of(
+                MovementRecord.builder()
+                        .lfdNr(1704093)
+                        .bestandNr(10821107)
+                        .lhmNr("4000045856")
+                        .platz("001PP0100100")
+                        .artikelNr("102494")
+                        .serienNr(null)
+                        .charge1("FFQA")
+                        .charge2("____________________")
+                        .mengeAenderung(BigDecimal.valueOf(0.00))
+                        .mengeGesamt(BigDecimal.valueOf(0.00))
+                        .gewichtAenderung(BigDecimal.valueOf(0.00))
+                        .mandant(250)
+                        .ereignis(MovementEreignis.LOESCH)
+                        .vgs(60)
+                        .datum(LocalDate.parse("2026-02-17"))
+                        .zeit("12:17:52")
+                        .usr("HS")
+                        .druckKnz("N")
+                        .beleg1("10821107")
+                        .beleg2("4000045856")
+                        .kdAuftragsNr("____________________")
+                        .kdAuftragsPos("__________")
+                        .build(),
+                MovementRecord.builder()
+                        .lfdNr(1704092)
+                        .bestandNr(10821107)
+                        .lhmNr("4000045856")
+                        .platz("001PP0100100")
+                        .artikelNr("102494")
+                        .serienNr(null)
+                        .charge1("FFQA")
+                        .charge2("____________________")
+                        .mengeAenderung(BigDecimal.valueOf(-3.00))
+                        .mengeGesamt(BigDecimal.valueOf(0.00))
+                        .gewichtAenderung(BigDecimal.valueOf(-0.99))
+                        .mandant(250)
+                        .ereignis(MovementEreignis.BEWGAB)
+                        .vgs(60)
+                        .datum(LocalDate.parse("2026-02-17"))
+                        .zeit("12:17:52")
+                        .usr("HS")
+                        .druckKnz("N")
+                        .beleg1("10821107")
+                        .beleg2("4000045856")
+                        .kdAuftragsNr("____________________")
+                        .kdAuftragsPos("__________")
+                        .build(),
+                MovementRecord.builder()
+                        .lfdNr(1704091)
+                        .bestandNr(10821107)
+                        .lhmNr("4000045856")
+                        .platz("001PP0100100")
+                        .artikelNr("102494")
+                        .serienNr(null)
+                        .charge1("FFQA")
+                        .charge2("____________________")
+                        .mengeAenderung(BigDecimal.valueOf(3.00))
+                        .mengeGesamt(BigDecimal.valueOf(3.00))
+                        .gewichtAenderung(BigDecimal.valueOf(0.99))
+                        .mandant(250)
+                        .ereignis(MovementEreignis.BEWGZU)
+                        .vgs(60)
+                        .datum(LocalDate.parse("2026-02-17"))
+                        .zeit("12:17:52")
+                        .usr("HS")
+                        .druckKnz("N")
+                        .beleg1("ELU0003056")
+                        .beleg2("2")
+                        .kdAuftragsNr("____________________")
+                        .kdAuftragsPos("__________")
+                        .build(),
+                MovementRecord.builder()
+                        .lfdNr(1704066)
+                        .bestandNr(10821107)
+                        .lhmNr("4000045856")
+                        .platz("001PP0100100")
+                        .artikelNr("102494")
+                        .serienNr(null)
+                        .charge1("FFQA")
+                        .charge2("____________________")
+                        .mengeAenderung(BigDecimal.valueOf(0.00))
+                        .mengeGesamt(BigDecimal.valueOf(3.00))
+                        .gewichtAenderung(BigDecimal.valueOf(0.00))
+                        .mandant(250)
+                        .ereignis(MovementEreignis.BEWGNG)
+                        .vgs(11)
+                        .datum(LocalDate.parse("2026-02-17"))
+                        .zeit("12:14:45")
+                        .usr("HS")
+                        .druckKnz("N")
+                        .beleg1("PZ0050974")
+                        .beleg2(null)
+                        .kdAuftragsNr("____________________")
+                        .kdAuftragsPos("__________")
+                        .build(),
+                MovementRecord.builder()
+                        .lfdNr(1704064)
+                        .bestandNr(10821107)
+                        .lhmNr("4000045856")
+                        .platz("001BC0044400")
+                        .artikelNr("102494")
+                        .serienNr(null)
+                        .charge1("FFQA")
+                        .charge2("____________________")
+                        .mengeAenderung(BigDecimal.valueOf(0.00))
+                        .mengeGesamt(BigDecimal.valueOf(3.00))
+                        .gewichtAenderung(BigDecimal.valueOf(0.00))
+                        .mandant(250)
+                        .ereignis(MovementEreignis.BEWGNG)
+                        .vgs(11)
+                        .datum(LocalDate.parse("2026-02-17"))
+                        .zeit("12:14:31")
+                        .usr("HS")
+                        .druckKnz("N")
+                        .beleg1(null)
+                        .beleg2(null)
+                        .kdAuftragsNr("____________________")
+                        .kdAuftragsPos("__________")
+                        .build(),
+                MovementRecord.builder()
+                        .lfdNr(1703750)
+                        .bestandNr(10821107)
+                        .lhmNr("4000045856")
+                        .platz("001AK0100000")
+                        .artikelNr("102494")
+                        .serienNr(null)
+                        .charge1("FFQA")
+                        .charge2("____________________")
+                        .mengeAenderung(BigDecimal.valueOf(3.00))
+                        .mengeGesamt(BigDecimal.valueOf(3.00))
+                        .gewichtAenderung(BigDecimal.valueOf(0.99))
+                        .mandant(250)
+                        .ereignis(MovementEreignis.BEWGZU)
+                        .vgs(25)
+                        .datum(LocalDate.parse("2026-02-17"))
+                        .zeit("11:08:42")
+                        .usr("KAAC")
+                        .druckKnz("N")
+                        .beleg1("ELU0003056")
+                        .beleg2("2")
+                        .kdAuftragsNr("____________________")
+                        .kdAuftragsPos("__________")
+                        .build()
+        );
+
+        StockData stockData = new StockData(new ArrayList<>());
+        movementRecords.forEach(movement -> stockData.handleMovement(Result.success(movement)));
+        stockData.cleanUp();
+        assertThat(stockData.getStockRecord(10821107)).isNull();
+    }
+
+    @Test
+    void testBulkWaUmlagerungMovements() {
+        List<MovementRecord> movementRecords = List.of(
+                MovementRecord.builder()
+                        .lfdNr(299738)
+                        .bestandNr(101585)
+                        .lhmNr("7000015227")
+                        .platz("001WA0000000")
+                        .artikelNr("103061")
+                        .serienNr(null)
+                        .charge1("611235")
+                        .charge2("____________________")
+                        .mengeAenderung(BigDecimal.valueOf(0.00))
+                        .mengeGesamt(BigDecimal.valueOf(12.00))
+                        .gewichtAenderung(BigDecimal.valueOf(0.00))
+                        .mandant(250)
+                        .ereignis(MovementEreignis.BEWGNG)
+                        .vgs(28)
+                        .datum(LocalDate.parse("2024-03-22"))
+                        .zeit("09:11:28")
+                        .usr("MaAn")
+                        .druckKnz("N")
+                        .beleg1(null)
+                        .beleg2(null)
+                        .kdAuftragsNr("AT0009766")
+                        .kdAuftragsPos("40000")
+                        .build(),
+                MovementRecord.builder()
+                        .lfdNr(267746)
+                        .bestandNr(101585)
+                        .lhmNr("7000015227")
+                        .platz("001WA0000000")
+                        .artikelNr("103061")
+                        .serienNr(null)
+                        .charge1("611235")
+                        .charge2("____________________")
+                        .mengeAenderung(BigDecimal.valueOf(0.00))
+                        .mengeGesamt(BigDecimal.valueOf(12.00))
+                        .gewichtAenderung(BigDecimal.valueOf(0.00))
+                        .mandant(250)
+                        .ereignis(MovementEreignis.BEWGNG)
+                        .vgs(11)
+                        .datum(LocalDate.parse("2024-03-01"))
+                        .zeit("08:08:25")
+                        .usr("MoMo")
+                        .druckKnz("N")
+                        .beleg1("PZ0010092")
+                        .beleg2(null)
+                        .kdAuftragsNr("AT0009766")
+                        .kdAuftragsPos("40000")
+                        .build(),
+                MovementRecord.builder()
+                        .lfdNr(267745)
+                        .bestandNr(101585)
+                        .lhmNr("7000015227")
+                        .platz("001PP0100000")
+                        .artikelNr("103061")
+                        .serienNr(null)
+                        .charge1("611235")
+                        .charge2("____________________")
+                        .mengeAenderung(BigDecimal.valueOf(12.00))
+                        .mengeGesamt(BigDecimal.valueOf(12.00))
+                        .gewichtAenderung(BigDecimal.valueOf(5.04))
+                        .mandant(250)
+                        .ereignis(MovementEreignis.BEWGZU)
+                        .vgs(26)
+                        .datum(LocalDate.parse("2024-03-01"))
+                        .zeit("08:08:19")
+                        .usr("MoMo")
+                        .druckKnz("N")
+                        .beleg1(null)
+                        .beleg2(null)
+                        .kdAuftragsNr("AT0009766")
+                        .kdAuftragsPos("40000")
+                        .build()
+        );
+
+        StockRecord stockRecord = StockRecord.builder()
+                .lfdNr(101585)
+                .artikelNr("103061")
+                .mandant(250)
+                .charge1("611235")
+                .charge2("____________________")
+                .serienNr(null)
+                .kdAuftragsNr("AT0009766")
+                .kdAuftragsPos("40000")
+                .palNr("7000015227")
+                .lhmNr("7000015227")
+                .platz("001WA0000000")
+                .mengeIst(BigDecimal.valueOf(12.00))
+                .build();
+
+        StockData stockData = new StockData(List.of(stockRecord));
+        movementRecords.forEach(movement -> stockData.handleMovement(Result.success(movement)));
+        stockData.cleanUp();
+        assertThat(stockData.getStockRecord(101585)).isNull();
+        assertThat(stockData.getErrors()).isEmpty();
     }
 
     @Test
@@ -497,12 +751,172 @@ class StockDataBulkTest {
 
         StockData stockData = new StockData(List.of(stockRecord));
         movementRecords.forEach(movement -> stockData.handleMovement(Result.success(movement)));
-
+        stockData.cleanUp();
         assertNotNull(stockData.getStockRecord(10829822));
-        assertThat(stockData.getErrors()).isEmpty();
         assertThat(stockData.getStockRecord(10829822).getMengeIst()).isEqualByComparingTo(BigDecimal.valueOf(9.00));
         assertThat(stockData.getStockRecord(10829822).getLhmNr()).isEqualTo("9000047190");
         assertThat(stockData.getStockRecord(10829822).getPalNr()).isEqualTo("9000047190");
         assertThat(stockData.getStockRecord(10829822).getPlatz()).isEqualTo("001BC0001700");
+    }
+
+    @Test
+    void testBulkChargenkorrekturMovements() {
+        List<MovementRecord> movementRecords = List.of(
+                MovementRecord.builder()
+                        .lfdNr(271074)
+                        .bestandNr(101701)
+                        .lhmNr("7000015248")
+                        .platz("001WA0000000")
+                        .artikelNr("101288")
+                        .serienNr(null)
+                        .charge1("104373")
+                        .charge2("____________________")
+                        .mengeAenderung(BigDecimal.valueOf(20.00))
+                        .mengeGesamt(BigDecimal.valueOf(20.00))
+                        .gewichtAenderung(BigDecimal.valueOf(13.40))
+                        .mandant(250)
+                        .ereignis(MovementEreignis.MGKOZU)
+                        .vgs(60)
+                        .datum(LocalDate.parse("2024-03-05"))
+                        .zeit("08:00:43")
+                        .usr("ZoLa")
+                        .druckKnz("N")
+                        .beleg1("Chargenkorrektur")
+                        .beleg2("-")
+                        .kdAuftragsNr("____________________")
+                        .kdAuftragsPos("__________")
+                        .build(),
+                MovementRecord.builder()
+                        .lfdNr(271073)
+                        .bestandNr(101701)
+                        .lhmNr("7000015248")
+                        .platz("001WA0000000")
+                        .artikelNr("101288")
+                        .serienNr(null)
+                        .charge1("4373")
+                        .charge2("____________________")
+                        .mengeAenderung(BigDecimal.valueOf(-20.00))
+                        .mengeGesamt(BigDecimal.valueOf(20.00))
+                        .gewichtAenderung(BigDecimal.valueOf(-13.40))
+                        .mandant(250)
+                        .ereignis(MovementEreignis.MGKOAB)
+                        .vgs(60)
+                        .datum(LocalDate.parse("2024-03-05"))
+                        .zeit("08:00:43")
+                        .usr("ZoLa")
+                        .druckKnz("N")
+                        .beleg1("Chargenkorrektur")
+                        .beleg2("-")
+                        .kdAuftragsNr("____________________")
+                        .kdAuftragsPos("__________")
+                        .build(),
+                MovementRecord.builder()
+                        .lfdNr(268109)
+                        .bestandNr(101701)
+                        .lhmNr("7000015248")
+                        .platz("001WA0000000")
+                        .artikelNr("101288")
+                        .serienNr(null)
+                        .charge1("4373")
+                        .charge2("____________________")
+                        .mengeAenderung(BigDecimal.valueOf(0.00))
+                        .mengeGesamt(BigDecimal.valueOf(20.00))
+                        .gewichtAenderung(BigDecimal.valueOf(0.00))
+                        .mandant(250)
+                        .ereignis(MovementEreignis.BEWGNG)
+                        .vgs(28)
+                        .datum(LocalDate.parse("2024-03-01"))
+                        .zeit("09:40:11")
+                        .usr("MaAn")
+                        .druckKnz("N")
+                        .beleg1(null)
+                        .beleg2(null)
+                        .kdAuftragsNr("____________________")
+                        .kdAuftragsPos("__________")
+                        .build(),
+                MovementRecord.builder()
+                        .lfdNr(268101)
+                        .bestandNr(101701)
+                        .lhmNr("7000015248")
+                        .platz("001WA0000000")
+                        .artikelNr("101288")
+                        .serienNr(null)
+                        .charge1("4373")
+                        .charge2("____________________")
+                        .mengeAenderung(BigDecimal.valueOf(0.00))
+                        .mengeGesamt(BigDecimal.valueOf(20.00))
+                        .gewichtAenderung(BigDecimal.valueOf(0.00))
+                        .mandant(250)
+                        .ereignis(MovementEreignis.BEWGNG)
+                        .vgs(11)
+                        .datum(LocalDate.parse("2024-03-01"))
+                        .zeit("09:36:18")
+                        .usr("MaAn")
+                        .druckKnz("N")
+                        .beleg1("PZ0010045")
+                        .beleg2(null)
+                        .kdAuftragsNr("____________________")
+                        .kdAuftragsPos("__________")
+                        .build(),
+                MovementRecord.builder()
+                        .lfdNr(268097)
+                        .bestandNr(101701)
+                        .lhmNr("7000015248")
+                        .platz("001PP0100000")
+                        .artikelNr("101288")
+                        .serienNr(null)
+                        .charge1("4373")
+                        .charge2("____________________")
+                        .mengeAenderung(BigDecimal.valueOf(20.00))
+                        .mengeGesamt(BigDecimal.valueOf(20.00))
+                        .gewichtAenderung(BigDecimal.valueOf(13.40))
+                        .mandant(250)
+                        .ereignis(MovementEreignis.BEWGZU)
+                        .vgs(26)
+                        .datum(LocalDate.parse("2024-03-01"))
+                        .zeit("09:36:09")
+                        .usr("MaAn")
+                        .druckKnz("N")
+                        .beleg1(null)
+                        .beleg2(null)
+                        .kdAuftragsNr("____________________")
+                        .kdAuftragsPos("__________")
+                        .build()
+        );
+
+        StockData stockData = new StockData(new ArrayList<>());
+        stockData.handleMovement(Result.success(movementRecords.get(0)));
+        assertThat(stockData.getStockRecord(101701)).isNotNull();
+        assertThat(stockData.getStockRecord(101701).getMengeIst()).isEqualByComparingTo(BigDecimal.valueOf(0.00));
+        assertThat(stockData.getStockRecord(101701).getLhmNr()).isEqualTo("7000015248");
+        assertThat(stockData.getStockRecord(101701).getPalNr()).isEqualTo("7000015248");
+        assertThat(stockData.getStockRecord(101701).getPlatz()).isEqualTo("001WA0000000");
+
+        stockData.handleMovement(Result.success(movementRecords.get(1)));
+        assertThat(stockData.getStockRecord(101701)).isNotNull();
+        assertThat(stockData.getStockRecord(101701).getMengeIst()).isEqualByComparingTo(BigDecimal.valueOf(20.00));
+        assertThat(stockData.getStockRecord(101701).getLhmNr()).isEqualTo("7000015248");
+        assertThat(stockData.getStockRecord(101701).getPalNr()).isEqualTo("7000015248");
+        assertThat(stockData.getStockRecord(101701).getPlatz()).isEqualTo("001WA0000000");
+
+        stockData.handleMovement(Result.success(movementRecords.get(2)));
+        assertThat(stockData.getStockRecord(101701)).isNotNull();
+        assertThat(stockData.getStockRecord(101701).getMengeIst()).isEqualByComparingTo(BigDecimal.valueOf(20.00));
+        assertThat(stockData.getStockRecord(101701).getLhmNr()).isEqualTo("7000015248");
+        assertThat(stockData.getStockRecord(101701).getPalNr()).isEqualTo("7000015248");
+        assertThat(stockData.getStockRecord(101701).getPlatz()).isEqualTo("001WA0000000");
+        stockData.handleMovement(Result.success(movementRecords.get(3)));
+        assertThat(stockData.getStockRecord(101701)).isNotNull();
+        assertThat(stockData.getStockRecord(101701).getMengeIst()).isEqualByComparingTo(BigDecimal.valueOf(20.00));
+        assertThat(stockData.getStockRecord(101701).getLhmNr()).isEqualTo("7000015248");
+        assertThat(stockData.getStockRecord(101701).getPalNr()).isEqualTo("7000015248");
+        assertThat(stockData.getStockRecord(101701).getPlatz()).isEqualTo("001WA0000000");
+        stockData.handleMovement(Result.success(movementRecords.get(4)));
+        assertThat(stockData.getStockRecord(101701)).isNotNull();
+        assertThat(stockData.getStockRecord(101701).getMengeIst()).isEqualByComparingTo(BigDecimal.valueOf(0.00));
+        assertThat(stockData.getStockRecord(101701).getLhmNr()).isEqualTo("7000015248");
+        assertThat(stockData.getStockRecord(101701).getPalNr()).isEqualTo("7000015248");
+        assertThat(stockData.getStockRecord(101701).getPlatz()).isEqualTo("001PP0100000");
+
     }
 }

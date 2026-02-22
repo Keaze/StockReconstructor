@@ -117,6 +117,8 @@ class StockDataTest {
                 .bestandNr(1)
                 .lhmNr("38280223L")
                 .platz("001020200809")
+                .mengeGesamt(BigDecimal.valueOf(5.000))
+                .mengeAenderung(BigDecimal.ZERO)
                 .mandant(250)
                 .ereignis(MovementEreignis.BEWGNG)
                 .build());
@@ -139,7 +141,7 @@ class StockDataTest {
                 .mengeGesamt(BigDecimal.valueOf(2.000))
                 .mengeAenderung(BigDecimal.TWO)
                 .mandant(250)
-                .ereignis(MovementEreignis.INVZH)
+                .ereignis(MovementEreignis.INVZHL)
                 .build());
         StockData stockData = new StockData(stockRecordList);
         stockData.handleMovement(movementRecord);

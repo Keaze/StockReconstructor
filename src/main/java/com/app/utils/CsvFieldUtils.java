@@ -3,6 +3,8 @@ package com.app.utils;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class CsvFieldUtils {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -79,5 +81,31 @@ public final class CsvFieldUtils {
 
     public static String formatLocalDate(LocalDate value) {
         return value == null ? "" : value.toString();
+    }
+
+    public static String[] splitCsvLine(String csvLine) {
+        List<String> fields = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
+        boolean inQuotes = false;
+
+        for (int i = 0; i < csvLine.length(); i++) {
+            char ch = csvLine.charAt(i);
+            if (ch == '"') {
+                if (inQuotes && i + 1 < csvLine.length() && csvLine.charAt(i + 1) == '"') {
+                    current.append('"');
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
+            } else if (ch == ',' && !inQuotes) {
+                fields.add(current.toString());
+                current.setLength(0);
+            } else {
+                current.append(ch);
+            }
+        }
+
+        fields.add(current.toString());
+        return fields.toArray(new String[0]);
     }
 }

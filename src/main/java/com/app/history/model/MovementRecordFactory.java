@@ -18,7 +18,7 @@ public class MovementRecordFactory {
             return Result.failure(StockError.parseError(csvLine, "CSV line is null or empty"));
         }
 
-        String[] fields = csvLine.split(",", -1);
+        String[] fields = splitCsvLine(csvLine);
 
         if (fields.length != EXPECTED_FIELD_COUNT) {
             return Result.failure(StockError.invalidFieldCount(csvLine, EXPECTED_FIELD_COUNT, fields.length));
