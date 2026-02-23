@@ -72,7 +72,7 @@ public class CsvStockIO implements StockIO {
                         .map(StockRecordFactory::createFromCsv)
                         .filter(Result::isSuccessful)
                         .collect(Collectors.toMap(
-                                result -> result.getOrThrow().getLfdNr(),
+                                result -> result.getOrThrow().getSequenceNumber(),
                                 Result::getOrThrow,
                                 (existing, replacement) -> existing
                         ));
@@ -103,7 +103,7 @@ public class CsvStockIO implements StockIO {
 
             try (var stockWriter = Files.newBufferedWriter(stockFile, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)) {
                 stockData.getStockRecords().values().stream()
-                        .sorted(Comparator.comparing(StockRecord::getLfdNr, Comparator.nullsLast(Integer::compareTo)))
+                        .sorted(Comparator.comparing(StockRecord::getSequenceNumber, Comparator.nullsLast(Integer::compareTo)))
                         .map(this::stockRecordToCsv)
                         .forEach(line -> writeLine(stockWriter, line));
             }
@@ -135,82 +135,82 @@ public class CsvStockIO implements StockIO {
 
     private String stockRecordToCsv(StockRecord stockRecord) {
         List<String> fields = new ArrayList<>();
-        fields.add(formatInteger(stockRecord.getLfdNr()));
-        fields.add(formatString(stockRecord.getArtikelNr()));
-        fields.add(formatInteger(stockRecord.getMandant()));
-        fields.add(formatString(stockRecord.getCharge1()));
-        fields.add(formatString(stockRecord.getCharge2()));
-        fields.add(formatString(stockRecord.getSerienNr()));
-        fields.add(formatString(stockRecord.getKdAuftragsNr()));
-        fields.add(formatString(stockRecord.getKdAuftragsPos()));
-        fields.add(formatString(stockRecord.getPalNr()));
-        fields.add(formatString(stockRecord.getLhmNr()));
-        fields.add(formatString(stockRecord.getPlatz()));
-        fields.add(formatInteger(stockRecord.getZustand()));
-        fields.add(formatInteger(stockRecord.getSperrKnz()));
-        fields.add(formatInteger(stockRecord.getLhmTyp()));
-        fields.add(formatBigDecimal(stockRecord.getGewicht()));
-        fields.add(formatBigDecimal(stockRecord.getMengeZu()));
-        fields.add(formatBigDecimal(stockRecord.getMengeIst()));
-        fields.add(formatBigDecimal(stockRecord.getMengeRes()));
-        fields.add(formatString(stockRecord.getAuftragsNr()));
-        fields.add(formatString(stockRecord.getAuftragsPos()));
-        fields.add(formatLocalDate(stockRecord.getStratDatum()));
-        fields.add(formatLocalDate(stockRecord.getInvDatum()));
-        fields.add(formatString(stockRecord.getInvZeit()));
-        fields.add(formatString(stockRecord.getInvUsr()));
-        fields.add(formatLocalDate(stockRecord.getBewDatum()));
-        fields.add(formatString(stockRecord.getBewZeit()));
-        fields.add(formatString(stockRecord.getInvKnz()));
-        fields.add(formatInteger(stockRecord.getPosAufPal()));
-        fields.add(formatString(stockRecord.getMhd()));
-        fields.add(formatString(stockRecord.getInstabil()));
-        fields.add(formatInteger(stockRecord.getWeStrat()));
-        fields.add(formatLocalDate(stockRecord.getWeDatum()));
-        fields.add(formatString(stockRecord.getWeNr()));
-        fields.add(formatInteger(stockRecord.getWePosNr()));
-        fields.add(formatString(stockRecord.getAnbruchKnz()));
-        fields.add(formatString(stockRecord.getQswaFlag()));
-        fields.add(formatBigDecimal(stockRecord.getQswaDiff()));
-        fields.add(formatBigDecimal(stockRecord.getMengeZeh()));
-        fields.add(formatInteger(stockRecord.getUmrezZeh()));
-        fields.add(formatInteger(stockRecord.getUmrenZeh()));
-        fields.add(formatBigDecimal(stockRecord.getNettoGewicht()));
-        fields.add(formatBigDecimal(stockRecord.getBruttoGewicht()));
-        fields.add(formatInteger(stockRecord.getRefBme()));
-        fields.add(formatInteger(stockRecord.getRefZeh()));
-        fields.add(formatInteger(stockRecord.getRefLfe()));
-        fields.add(formatInteger(stockRecord.getRefVke()));
-        fields.add(formatInteger(stockRecord.getRefPal()));
-        fields.add(formatLocalDate(stockRecord.getNeuDatum()));
-        fields.add(formatString(stockRecord.getNeuZeit()));
-        fields.add(formatString(stockRecord.getNeuUsr()));
-        fields.add(formatLocalDate(stockRecord.getAenderDatum()));
-        fields.add(formatString(stockRecord.getAenderZeit()));
-        fields.add(formatString(stockRecord.getAenderUsr()));
-        fields.add(formatString(stockRecord.getAuszeichUser()));
-        fields.add(formatString(stockRecord.getAuszeichZeit()));
-        fields.add(formatLocalDate(stockRecord.getAuszeichDatum()));
-        fields.add(formatInteger(stockRecord.getPickLfdNr()));
-        fields.add(formatString(stockRecord.getBestellNr()));
-        fields.add(formatString(stockRecord.getBestellPos()));
-        fields.add(formatLocalDate(stockRecord.getRueckmeldeDatum()));
-        fields.add(formatString(stockRecord.getRueckmeldeZeit()));
-        fields.add(formatInteger(stockRecord.getRueckmeldeLfdNr()));
-        fields.add(formatString(stockRecord.getRueckmeldeKnz()));
-        fields.add(formatString(stockRecord.getWerknr()));
-        fields.add(formatString(stockRecord.getDivText1()));
-        fields.add(formatString(stockRecord.getDivText2()));
-        fields.add(formatString(stockRecord.getQswaKontrolliert()));
-        fields.add(formatString(stockRecord.getKnzBypass()));
-        fields.add(formatString(stockRecord.getPruefFlag()));
-        fields.add(formatString(stockRecord.getKnzAklKom()));
-        fields.add(formatString(stockRecord.getKnzAklFaehig()));
-        fields.add(formatBigDecimal(stockRecord.getAklGewichtstoleranzLot()));
-        fields.add(formatString(stockRecord.getLagerort()));
-        fields.add(formatInteger(stockRecord.getRefIu()));
-        fields.add(formatInteger(stockRecord.getRefMu()));
-        fields.add(formatInteger(stockRecord.getRueckmeldeLfdNrOrg()));
+        fields.add(formatInteger(stockRecord.getSequenceNumber()));
+        fields.add(formatString(stockRecord.getItemNumber()));
+        fields.add(formatInteger(stockRecord.getClient()));
+        fields.add(formatString(stockRecord.getBatch1()));
+        fields.add(formatString(stockRecord.getBatch2()));
+        fields.add(formatString(stockRecord.getSerialNumber()));
+        fields.add(formatString(stockRecord.getCustomerOrderNumber()));
+        fields.add(formatString(stockRecord.getCustomerOrderPosition()));
+        fields.add(formatString(stockRecord.getPalletNumber()));
+        fields.add(formatString(stockRecord.getHandlingUnitNumber()));
+        fields.add(formatString(stockRecord.getLocation()));
+        fields.add(formatInteger(stockRecord.getCondition()));
+        fields.add(formatInteger(stockRecord.getLockIndicator()));
+        fields.add(formatInteger(stockRecord.getHandlingUnitType()));
+        fields.add(formatBigDecimal(stockRecord.getWeight()));
+        fields.add(formatBigDecimal(stockRecord.getQuantityAdded()));
+        fields.add(formatBigDecimal(stockRecord.getQuantityOnHand()));
+        fields.add(formatBigDecimal(stockRecord.getQuantityReserved()));
+        fields.add(formatString(stockRecord.getOrderNumber()));
+        fields.add(formatString(stockRecord.getOrderPosition()));
+        fields.add(formatLocalDate(stockRecord.getStrategyDate()));
+        fields.add(formatLocalDate(stockRecord.getInventoryDate()));
+        fields.add(formatString(stockRecord.getInventoryTime()));
+        fields.add(formatString(stockRecord.getInventoryUser()));
+        fields.add(formatLocalDate(stockRecord.getMovementDate()));
+        fields.add(formatString(stockRecord.getMovementTime()));
+        fields.add(formatString(stockRecord.getInventoryIndicator()));
+        fields.add(formatInteger(stockRecord.getPositionOnPallet()));
+        fields.add(formatString(stockRecord.getBestBeforeDate()));
+        fields.add(formatString(stockRecord.getInstabilityFlag()));
+        fields.add(formatInteger(stockRecord.getInboundStrategy()));
+        fields.add(formatLocalDate(stockRecord.getInboundDate()));
+        fields.add(formatString(stockRecord.getInboundNumber()));
+        fields.add(formatInteger(stockRecord.getInboundPositionNumber()));
+        fields.add(formatString(stockRecord.getOpenedIndicator()));
+        fields.add(formatString(stockRecord.getQualitySwapFlag()));
+        fields.add(formatBigDecimal(stockRecord.getQualitySwapDifference()));
+        fields.add(formatBigDecimal(stockRecord.getQuantityDecimal()));
+        fields.add(formatInteger(stockRecord.getConversionNumerator()));
+        fields.add(formatInteger(stockRecord.getConversionDenominator()));
+        fields.add(formatBigDecimal(stockRecord.getNetWeight()));
+        fields.add(formatBigDecimal(stockRecord.getGrossWeight()));
+        fields.add(formatInteger(stockRecord.getReferenceBme()));
+        fields.add(formatInteger(stockRecord.getReferenceZeh()));
+        fields.add(formatInteger(stockRecord.getReferenceLfe()));
+        fields.add(formatInteger(stockRecord.getReferenceVke()));
+        fields.add(formatInteger(stockRecord.getReferencePallet()));
+        fields.add(formatLocalDate(stockRecord.getCreatedDate()));
+        fields.add(formatString(stockRecord.getCreatedTime()));
+        fields.add(formatString(stockRecord.getCreatedUser()));
+        fields.add(formatLocalDate(stockRecord.getModifiedDate()));
+        fields.add(formatString(stockRecord.getModifiedTime()));
+        fields.add(formatString(stockRecord.getModifiedUser()));
+        fields.add(formatString(stockRecord.getLabelUser()));
+        fields.add(formatString(stockRecord.getLabelTime()));
+        fields.add(formatLocalDate(stockRecord.getLabelDate()));
+        fields.add(formatInteger(stockRecord.getPickSequenceNumber()));
+        fields.add(formatString(stockRecord.getPurchaseOrderNumber()));
+        fields.add(formatString(stockRecord.getPurchaseOrderPosition()));
+        fields.add(formatLocalDate(stockRecord.getFeedbackDate()));
+        fields.add(formatString(stockRecord.getFeedbackTime()));
+        fields.add(formatInteger(stockRecord.getFeedbackSequenceNumber()));
+        fields.add(formatString(stockRecord.getFeedbackIndicator()));
+        fields.add(formatString(stockRecord.getPlantNumber()));
+        fields.add(formatString(stockRecord.getMiscText1()));
+        fields.add(formatString(stockRecord.getMiscText2()));
+        fields.add(formatString(stockRecord.getQualitySwapChecked()));
+        fields.add(formatString(stockRecord.getBypassIndicator()));
+        fields.add(formatString(stockRecord.getInspectionFlag()));
+        fields.add(formatString(stockRecord.getAklKomIndicator()));
+        fields.add(formatString(stockRecord.getAklCapableIndicator()));
+        fields.add(formatBigDecimal(stockRecord.getAklWeightToleranceLot()));
+        fields.add(formatString(stockRecord.getStorageLocation()));
+        fields.add(formatInteger(stockRecord.getReferenceIu()));
+        fields.add(formatInteger(stockRecord.getReferenceMu()));
+        fields.add(formatInteger(stockRecord.getFeedbackSequenceNumberOriginal()));
         return String.join(",", fields);
     }
 

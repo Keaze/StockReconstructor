@@ -20,11 +20,11 @@ class MovementRecordFactoryTest {
         MovementRecord movementRecord = result.getOrThrow();
 
         assertThat(movementRecord).isNotNull();
-        assertThat(movementRecord.lfdNr()).isEqualTo(1710707);
-        assertThat(movementRecord.bestandNr()).isEqualTo(11005744);
-        assertThat(movementRecord.platz()).isEqualTo("001AK0100000");
-        assertThat(movementRecord.charge1()).isEqualTo("R65127");
-        assertThat(movementRecord.ereignis()).isEqualTo(MovementEreignis.BEWGZU);
+        assertThat(movementRecord.sequenceNumber()).isEqualTo(1710707);
+        assertThat(movementRecord.stockNumber()).isEqualTo(11005744);
+        assertThat(movementRecord.location()).isEqualTo("001AK0100000");
+        assertThat(movementRecord.batch1()).isEqualTo("R65127");
+        assertThat(movementRecord.event()).isEqualTo(MovementEvent.MOVEMENT_IN);
     }
 
     @Test
@@ -43,7 +43,7 @@ class MovementRecordFactoryTest {
     }
 
     @Test
-    void shouldParseEreignisCaseInsensitive() {
+    void shouldParseEventCaseInsensitive() {
         String csvLine = "1710707,11005744,4000046303,001AK0100000,103098,,R65127,____________________,1.000,1.000,1.200,250,bewgzu,25,2026-02-19,16:45:17,KAAC,N,ELU0002984,38,____________________,__________";
 
         Result<MovementRecord, StockError> result = MovementRecordFactory.createFromCsv(csvLine);
@@ -51,11 +51,11 @@ class MovementRecordFactoryTest {
         assertThat(result.isSuccessful()).isTrue();
 
         MovementRecord movementRecord = result.getOrThrow();
-        assertThat(movementRecord.ereignis()).isEqualTo(MovementEreignis.BEWGZU);
+        assertThat(movementRecord.event()).isEqualTo(MovementEvent.MOVEMENT_IN);
     }
 
     @Test
-    void shouldReturnFailureForInvalidEreignis() {
+    void shouldReturnFailureForInvalidEvent() {
         String csvLine = "1710707,11005744,4000046303,001AK0100000,103098,,R65127,____________________,1.000,1.000,1.200,250,BADVAL,25,2026-02-19,16:45:17,KAAC,N,ELU0002984,38,____________________,__________";
 
         Result<MovementRecord, StockError> result = MovementRecordFactory.createFromCsv(csvLine);
@@ -64,6 +64,6 @@ class MovementRecordFactoryTest {
 
         StockError error = result.error();
         assertThat(error).isNotNull();
-        assertThat(error.type()).isEqualTo(StockError.ErrorType.INVALID_EREIGNIS);
+        assertThat(error.type()).isEqualTo(StockError.ErrorType.INVALID_EVENT);
     }
 }

@@ -1,6 +1,6 @@
 package com.app.stock;
 
-import com.app.history.model.MovementEreignis;
+import com.app.history.model.MovementEvent;
 import com.app.history.model.MovementRecord;
 import com.app.stock.model.StockRecord;
 import com.app.utils.Result;
@@ -23,144 +23,144 @@ class StockDataTest {
     void setUp() {
         stockRecordList = List.of(
                 StockRecord.builder()
-                        .lfdNr(1)
-                        .mandant(250)
-                        .platz("001020200807")
-                        .palNr("38280223L")
-                        .lhmNr("38280223L")
-                        .mengeIst(BigDecimal.valueOf(5.000))
+                        .sequenceNumber(1)
+                        .client(250)
+                        .location("001020200807")
+                        .palletNumber("38280223L")
+                        .handlingUnitNumber("38280223L")
+                        .quantityOnHand(BigDecimal.valueOf(5.000))
                         .build(),
                 StockRecord.builder()
-                        .lfdNr(2)
-                        .mandant(250)
-                        .platz("001020200808")
-                        .mengeIst(BigDecimal.valueOf(2.000))
+                        .sequenceNumber(2)
+                        .client(250)
+                        .location("001020200808")
+                        .quantityOnHand(BigDecimal.valueOf(2.000))
                         .build(),
                 StockRecord.builder()
-                        .lfdNr(3)
-                        .mandant(250)
-                        .platz("001020200809")
-                        .mengeIst(BigDecimal.valueOf(1.000))
+                        .sequenceNumber(3)
+                        .client(250)
+                        .location("001020200809")
+                        .quantityOnHand(BigDecimal.valueOf(1.000))
                         .build()
         );
 
     }
 
     @Test
-    void test_delete_movement() {
+    void testDeleteMovement() {
         Result<MovementRecord, StockError> movementRecord = Result.success(MovementRecord.builder()
-                .lfdNr(4)
-                .bestandNr(4)
-                .mengeGesamt(BigDecimal.valueOf(2.000))
-                .lhmNr("38280223L")
-                .platz("001020200807")
-                .mandant(250)
-                .ereignis(MovementEreignis.LOESCH)
+                .sequenceNumber(4)
+                .stockNumber(4)
+                .quantityTotal(BigDecimal.valueOf(2.000))
+                .handlingUnitNumber("38280223L")
+                .location("001020200807")
+                .client(250)
+                .event(MovementEvent.DELETE)
                 .build());
         StockData stockData = new StockData(stockRecordList);
         assertNull(stockData.getStockRecord(4));
         stockData.handleMovement(movementRecord);
         assertNotNull(stockData.getStockRecord(4));
-        assertThat(stockData.getStockRecord(4).getMengeIst()).isEqualTo(BigDecimal.valueOf(2.000));
-        assertThat(stockData.getStockRecord(4).getLhmNr()).isEqualTo("38280223L");
-        assertThat(stockData.getStockRecord(4).getPlatz()).isEqualTo("001020200807");
+        assertThat(stockData.getStockRecord(4).getQuantityOnHand()).isEqualTo(BigDecimal.valueOf(2.000));
+        assertThat(stockData.getStockRecord(4).getHandlingUnitNumber()).isEqualTo("38280223L");
+        assertThat(stockData.getStockRecord(4).getLocation()).isEqualTo("001020200807");
 
     }
 
     @Test
-    void test_bewab() {
+    void testMovementOut() {
         Result<MovementRecord, StockError> movementRecord = Result.success(MovementRecord.builder()
-                .lfdNr(1)
-                .bestandNr(1)
-                .mengeGesamt(BigDecimal.valueOf(2.000))
-                .mengeAenderung(BigDecimal.TWO.multiply(BigDecimal.valueOf(-1)))
-                .lhmNr("38280223L")
-                .platz("001020200807")
-                .mandant(250)
-                .ereignis(MovementEreignis.BEWGAB)
+                .sequenceNumber(1)
+                .stockNumber(1)
+                .quantityTotal(BigDecimal.valueOf(2.000))
+                .quantityChange(BigDecimal.TWO.multiply(BigDecimal.valueOf(-1)))
+                .handlingUnitNumber("38280223L")
+                .location("001020200807")
+                .client(250)
+                .event(MovementEvent.MOVEMENT_OUT)
                 .build());
         StockData stockData = new StockData(stockRecordList);
         stockData.handleMovement(movementRecord);
         assertNotNull(stockData.getStockRecord(1));
-        assertThat(stockData.getStockRecord(1).getMengeIst()).isEqualByComparingTo(BigDecimal.valueOf(7.000));
-        assertThat(stockData.getStockRecord(1).getLhmNr()).isEqualTo("38280223L");
-        assertThat(stockData.getStockRecord(1).getPalNr()).isEqualTo("38280223L");
-        assertThat(stockData.getStockRecord(1).getPlatz()).isEqualTo("001020200807");
+        assertThat(stockData.getStockRecord(1).getQuantityOnHand()).isEqualByComparingTo(BigDecimal.valueOf(7.000));
+        assertThat(stockData.getStockRecord(1).getHandlingUnitNumber()).isEqualTo("38280223L");
+        assertThat(stockData.getStockRecord(1).getPalletNumber()).isEqualTo("38280223L");
+        assertThat(stockData.getStockRecord(1).getLocation()).isEqualTo("001020200807");
 
     }
 
     @Test
-    void test_bewzu() {
+    void testMovementIn() {
         Result<MovementRecord, StockError> movementRecord = Result.success(MovementRecord.builder()
-                .lfdNr(1)
-                .bestandNr(1)
-                .mengeGesamt(BigDecimal.valueOf(2.000))
-                .mengeAenderung(BigDecimal.TWO)
-                .lhmNr("38280223L")
-                .platz("001020200807")
-                .mandant(250)
-                .ereignis(MovementEreignis.BEWGAB)
+                .sequenceNumber(1)
+                .stockNumber(1)
+                .quantityTotal(BigDecimal.valueOf(2.000))
+                .quantityChange(BigDecimal.TWO)
+                .handlingUnitNumber("38280223L")
+                .location("001020200807")
+                .client(250)
+                .event(MovementEvent.MOVEMENT_OUT)
                 .build());
         StockData stockData = new StockData(stockRecordList);
         stockData.handleMovement(movementRecord);
         assertNotNull(stockData.getStockRecord(1));
-        assertThat(stockData.getStockRecord(1).getMengeIst()).isEqualByComparingTo(BigDecimal.valueOf(3.000));
-        assertThat(stockData.getStockRecord(1).getLhmNr()).isEqualTo("38280223L");
-        assertThat(stockData.getStockRecord(1).getPalNr()).isEqualTo("38280223L");
-        assertThat(stockData.getStockRecord(1).getPlatz()).isEqualTo("001020200807");
+        assertThat(stockData.getStockRecord(1).getQuantityOnHand()).isEqualByComparingTo(BigDecimal.valueOf(3.000));
+        assertThat(stockData.getStockRecord(1).getHandlingUnitNumber()).isEqualTo("38280223L");
+        assertThat(stockData.getStockRecord(1).getPalletNumber()).isEqualTo("38280223L");
+        assertThat(stockData.getStockRecord(1).getLocation()).isEqualTo("001020200807");
     }
 
     @Test
-    void test_bew() {
+    void testMovementNeutral() {
         Result<MovementRecord, StockError> movementRecord = Result.success(MovementRecord.builder()
-                .lfdNr(1)
-                .bestandNr(1)
-                .lhmNr("38280223L")
-                .platz("001020200809")
-                .mengeGesamt(BigDecimal.valueOf(5.000))
-                .mengeAenderung(BigDecimal.ZERO)
-                .mandant(250)
-                .ereignis(MovementEreignis.BEWGNG)
+                .sequenceNumber(1)
+                .stockNumber(1)
+                .handlingUnitNumber("38280223L")
+                .location("001020200809")
+                .quantityTotal(BigDecimal.valueOf(5.000))
+                .quantityChange(BigDecimal.ZERO)
+                .client(250)
+                .event(MovementEvent.MOVEMENT_NEUTRAL)
                 .build());
         StockData stockData = new StockData(stockRecordList);
         stockData.handleMovement(movementRecord);
         assertNotNull(stockData.getStockRecord(1));
-        assertThat(stockData.getStockRecord(1).getMengeIst()).isEqualByComparingTo(BigDecimal.valueOf(5.000));
-        assertThat(stockData.getStockRecord(1).getLhmNr()).isEqualTo("38280223L");
-        assertThat(stockData.getStockRecord(1).getPalNr()).isEqualTo("38280223L");
-        assertThat(stockData.getStockRecord(1).getPlatz()).isEqualTo("001020200809");
+        assertThat(stockData.getStockRecord(1).getQuantityOnHand()).isEqualByComparingTo(BigDecimal.valueOf(5.000));
+        assertThat(stockData.getStockRecord(1).getHandlingUnitNumber()).isEqualTo("38280223L");
+        assertThat(stockData.getStockRecord(1).getPalletNumber()).isEqualTo("38280223L");
+        assertThat(stockData.getStockRecord(1).getLocation()).isEqualTo("001020200809");
     }
 
     @Test
-    void test_inv() {
+    void testInventoryCount() {
         Result<MovementRecord, StockError> movementRecord = Result.success(MovementRecord.builder()
-                .lfdNr(1)
-                .bestandNr(1)
-                .lhmNr("38280223L")
-                .platz("001020200809")
-                .mengeGesamt(BigDecimal.valueOf(2.000))
-                .mengeAenderung(BigDecimal.TWO)
-                .mandant(250)
-                .ereignis(MovementEreignis.INVZHL)
+                .sequenceNumber(1)
+                .stockNumber(1)
+                .handlingUnitNumber("38280223L")
+                .location("001020200809")
+                .quantityTotal(BigDecimal.valueOf(2.000))
+                .quantityChange(BigDecimal.TWO)
+                .client(250)
+                .event(MovementEvent.INVENTORY_COUNT)
                 .build());
         StockData stockData = new StockData(stockRecordList);
         stockData.handleMovement(movementRecord);
         assertNotNull(stockData.getStockRecord(1));
-        assertThat(stockData.getStockRecord(1).getMengeIst()).isEqualByComparingTo(BigDecimal.valueOf(3.000));
-        assertThat(stockData.getStockRecord(1).getLhmNr()).isEqualTo("38280223L");
-        assertThat(stockData.getStockRecord(1).getPalNr()).isEqualTo("38280223L");
-        assertThat(stockData.getStockRecord(1).getPlatz()).isEqualTo("001020200809");
+        assertThat(stockData.getStockRecord(1).getQuantityOnHand()).isEqualByComparingTo(BigDecimal.valueOf(3.000));
+        assertThat(stockData.getStockRecord(1).getHandlingUnitNumber()).isEqualTo("38280223L");
+        assertThat(stockData.getStockRecord(1).getPalletNumber()).isEqualTo("38280223L");
+        assertThat(stockData.getStockRecord(1).getLocation()).isEqualTo("001020200809");
     }
 
     @Test
-    void test_loesch() {
+    void testGoodsReceipt() {
         Result<MovementRecord, StockError> movementRecord = Result.success(MovementRecord.builder()
-                .lfdNr(1)
-                .bestandNr(1)
-                .lhmNr("38280223L")
-                .platz("001020200809")
-                .mandant(250)
-                .ereignis(MovementEreignis.WAREIN)
+                .sequenceNumber(1)
+                .stockNumber(1)
+                .handlingUnitNumber("38280223L")
+                .location("001020200809")
+                .client(250)
+                .event(MovementEvent.GOODS_RECEIPT)
                 .build());
         StockData stockData = new StockData(stockRecordList);
         assertNotNull(stockData.getStockRecord(1));

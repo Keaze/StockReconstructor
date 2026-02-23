@@ -3,8 +3,6 @@ package com.app.history.model;
 import com.app.utils.Result;
 import com.app.utils.StockError;
 
-import java.util.Locale;
-
 import static com.app.utils.CsvFieldUtils.*;
 
 public class MovementRecordFactory {
@@ -26,51 +24,48 @@ public class MovementRecordFactory {
 
         try {
             MovementRecord movementRecord = MovementRecord.builder()
-                    .lfdNr(parseInt(fields[0]))
-                    .bestandNr(parseInt(fields[1]))
-                    .lhmNr(parseString(fields[2]))
-                    .platz(parseString(fields[3]))
-                    .artikelNr(parseString(fields[4]))
-                    .serienNr(parseString(fields[5]))
-                    .charge1(parseString(fields[6]))
-                    .charge2(parseString(fields[7]))
-                    .mengeAenderung(parseBigDecimal(fields[8]))
-                    .mengeGesamt(parseBigDecimal(fields[9]))
-                    .gewichtAenderung(parseBigDecimal(fields[10]))
-                    .mandant(parseInt(fields[11]))
-                    .ereignis(parseEreignis(fields[12]))
-                    .vgs(parseInt(fields[13]))
-                    .datum(parseDate(fields[14]))
-                    .zeit(parseString(fields[15]))
-                    .usr(parseString(fields[16]))
-                    .druckKnz(parseString(fields[17]))
-                    .beleg1(parseString(fields[18]))
-                    .beleg2(parseString(fields[19]))
-                    .kdAuftragsNr(parseString(fields[20]))
-                    .kdAuftragsPos(parseString(fields[21]))
+                    .sequenceNumber(parseInt(fields[0]))
+                    .stockNumber(parseInt(fields[1]))
+                    .handlingUnitNumber(parseString(fields[2]))
+                    .location(parseString(fields[3]))
+                    .itemNumber(parseString(fields[4]))
+                    .serialNumber(parseString(fields[5]))
+                    .batch1(parseString(fields[6]))
+                    .batch2(parseString(fields[7]))
+                    .quantityChange(parseBigDecimal(fields[8]))
+                    .quantityTotal(parseBigDecimal(fields[9]))
+                    .weightChange(parseBigDecimal(fields[10]))
+                    .client(parseInt(fields[11]))
+                    .event(parseEvent(fields[12]))
+                    .statusCode(parseInt(fields[13]))
+                    .date(parseDate(fields[14]))
+                    .time(parseString(fields[15]))
+                    .user(parseString(fields[16]))
+                    .printIndicator(parseString(fields[17]))
+                    .document1(parseString(fields[18]))
+                    .document2(parseString(fields[19]))
+                    .customerOrderNumber(parseString(fields[20]))
+                    .customerOrderPosition(parseString(fields[21]))
                     .build();
 
             return Result.success(movementRecord);
-        } catch (InvalidEreignisException e) {
-            return Result.failure(StockError.invalidEreignis(csvLine, e.getMessage()));
+        } catch (InvalidEventException e) {
+            return Result.failure(StockError.invalidEvent(csvLine, e.getMessage()));
         } catch (Exception e) {
             return Result.failure(StockError.parseError(csvLine, "Failed to parse MovementRecord: " + e.getMessage()));
         }
     }
 
-    private static MovementEreignis parseEreignis(String value) {
-        if (value == null || value.trim().isEmpty() || value.trim().equals("_".repeat(20)) || value.trim().equals("_".repeat(10))) {
-            return null;
-        }
+    private static MovementEvent parseEvent(String value) {
         try {
-            return MovementEreignis.valueOf(value.trim().toUpperCase(Locale.ROOT));
+            return MovementEvent.fromCode(value);
         } catch (IllegalArgumentException _) {
-            throw new InvalidEreignisException(value);
+            throw new InvalidEventException(value);
         }
     }
 
-    private static class InvalidEreignisException extends RuntimeException {
-        private InvalidEreignisException(String value) {
+    private static class InvalidEventException extends RuntimeException {
+        private InvalidEventException(String value) {
             super(value);
         }
     }

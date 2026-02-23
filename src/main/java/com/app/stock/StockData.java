@@ -1,6 +1,6 @@
 package com.app.stock;
 
-import com.app.history.model.MovementEreignis;
+import com.app.history.model.MovementEvent;
 import com.app.history.model.MovementRecord;
 import com.app.stock.model.StockRecord;
 import com.app.utils.Result;
@@ -20,18 +20,18 @@ public class StockData {
     private final Set<Integer> finalizedStocks = new HashSet<>();
     @Getter
     private final List<StockError> errors = new ArrayList<>();
-    private Integer lastMovementId = Integer.MAX_VALUE;
+    private Integer lastMovementSequenceNumber = Integer.MAX_VALUE;
     @Getter
     private boolean criticalErrors = false;
     private final LocalDate stockDate;
 
     public StockData(List<StockRecord> stockRecords, LocalDate stockDate) {
-        this.stockRecords = stockRecords.stream().collect(HashMap::new, (map, stockRecord) -> map.put(stockRecord.getLfdNr(), stockRecord), HashMap::putAll);
+        this.stockRecords = stockRecords.stream().collect(HashMap::new, (map, stockRecord) -> map.put(stockRecord.getSequenceNumber(), stockRecord), HashMap::putAll);
         this.stockDate = stockDate;
     }
 
     public StockData(List<StockRecord> stockRecords) {
-        this.stockRecords = stockRecords.stream().collect(HashMap::new, (map, stockRecord) -> map.put(stockRecord.getLfdNr(), stockRecord), HashMap::putAll);
+        this.stockRecords = stockRecords.stream().collect(HashMap::new, (map, stockRecord) -> map.put(stockRecord.getSequenceNumber(), stockRecord), HashMap::putAll);
         this.stockDate = null;
     }
 
@@ -61,73 +61,79 @@ public class StockData {
         }
         final MovementRecord movementRecord = movement.getOrThrow();
 
-        if (stockDate != null && movementRecord.datum().isBefore(stockDate) && !finalizedStocks.contains(movementRecord.bestandNr())) {
-            finalizedStocks.add(movementRecord.bestandNr());
-            Optional.ofNullable(stockRecords.get(movementRecord.bestandNr())).ifPresent(s -> s.setPlatz(movementRecord.platz()));
-            LOGGER.info("Movement for finalized stock: {}", movementRecord.bestandNr());
+        if (stockDate != null && movementRecord.date().isBefore(stockDate) && !finalizedStocks.contains(movementRecord.stockNumber())) {
+            finalizedStocks.add(movementRecord.stockNumber());
+            Optional.ofNullable(stockRecords.get(movementRecord.stockNumber())).ifPresent(s -> s.setLocation(movementRecord.location()));
+            LOGGER.info("Movement for finalized stock: {}", movementRecord.stockNumber());
             return;
         }
 
 
-        if (movementRecord.lfdNr() >= lastMovementId) {
-            errors.add(new StockError(StockError.ErrorType.MOVEMENT_ERROR, "Movement ID out of order: " + movementRecord.lfdNr(), ""));
+        if (movementRecord.sequenceNumber() >= lastMovementSequenceNumber) {
+            errors.add(new StockError(StockError.ErrorType.MOVEMENT_ERROR, "Movement ID out of order: " + movementRecord.sequenceNumber(), ""));
             criticalErrors = true;
-            LOGGER.warn("Movement ID out of order: {}", movementRecord.lfdNr());
+            LOGGER.warn("Movement ID out of order: {}", movementRecord.sequenceNumber());
         }
-        lastMovementId = movementRecord.lfdNr();
-        final StockRecord stockRecord = stockRecords.get(movementRecord.bestandNr());
-        switch (movementRecord.ereignis()) {
-            case LOESCH -> createStock(movementRecord);
-            case BEWGAB, MGKOAB, MGKOZU, INVZHL, BEWGZU, BEWGNG -> {
+        lastMovementSequenceNumber = movementRecord.sequenceNumber();
+        final StockRecord stockRecord = stockRecords.get(movementRecord.stockNumber());
+        switch (movementRecord.event()) {
+            case DELETE -> createStock(movementRecord);
+            case MOVEMENT_OUT, BATCH_CORRECTION_OUT, BATCH_CORRECTION_IN, INVENTORY_COUNT, MOVEMENT_IN,
+                 MOVEMENT_NEUTRAL -> {
                 if (stockRecord == null) {
                     createStock(movementRecord);
                 } else {
                     changeStockRecord(stockRecord, movementRecord);
                 }
             }
-            case WAREIN -> stockRecords.remove(movementRecord.bestandNr());
+            case GOODS_RECEIPT -> stockRecords.remove(movementRecord.stockNumber());
         }
     }
 
     public void cleanUp() {
-        stockRecords.values().removeIf(stockRecord -> stockRecord.getMengeIst().compareTo(BigDecimal.ZERO) <= 0);
+        stockRecords.values().removeIf(stockRecord -> stockRecord.getQuantityOnHand().compareTo(BigDecimal.ZERO) <= 0);
     }
 
     private void createStock(MovementRecord movementRecord) {
         final StockRecord newStockRecord = StockRecord.builder()
-                .lfdNr(movementRecord.bestandNr())
-                .artikelNr(movementRecord.artikelNr())
-                .mandant(movementRecord.mandant())
-                .charge1(movementRecord.charge1())
-                .charge2(movementRecord.charge2())
-                .serienNr(movementRecord.serienNr())
-                .kdAuftragsNr(movementRecord.kdAuftragsNr())
-                .kdAuftragsPos(movementRecord.kdAuftragsPos())
-                .palNr(movementRecord.lhmNr())
-                .lhmNr(movementRecord.lhmNr())
-                .platz(movementRecord.platz())
-                .mengeIst(movementRecord.mengeGesamt())
+                .sequenceNumber(movementRecord.stockNumber())
+                .itemNumber(movementRecord.itemNumber())
+                .client(movementRecord.client())
+                .batch1(movementRecord.batch1())
+                .batch2(movementRecord.batch2())
+                .serialNumber(movementRecord.serialNumber())
+                .customerOrderNumber(movementRecord.customerOrderNumber())
+                .customerOrderPosition(movementRecord.customerOrderPosition())
+                .palletNumber(movementRecord.handlingUnitNumber())
+                .handlingUnitNumber(movementRecord.handlingUnitNumber())
+                .location(movementRecord.location())
+                .quantityOnHand(movementRecord.quantityTotal())
                 .build();
-        stockRecords.put(movementRecord.bestandNr(), newStockRecord);
-        final BigDecimal aenderung = Optional.ofNullable(movementRecord.mengeAenderung()).orElse(BigDecimal.ZERO);
-        final BigDecimal newValue = newStockRecord.getMengeIst().add(aenderung.multiply(BigDecimal.valueOf(-1)));
-        newStockRecord.setMengeIst(newValue);
+        stockRecords.put(movementRecord.stockNumber(), newStockRecord);
+        final BigDecimal change = Optional.ofNullable(movementRecord.quantityChange()).orElse(BigDecimal.ZERO);
+        final BigDecimal newValue = newStockRecord.getQuantityOnHand().add(change.multiply(BigDecimal.valueOf(-1)));
+        newStockRecord.setQuantityOnHand(newValue);
     }
 
     private void changeStockRecord(StockRecord stockRecord, MovementRecord movementRecord) {
-        final BigDecimal aenderung = Optional.ofNullable(movementRecord.mengeAenderung()).orElse(BigDecimal.ZERO);
-        final BigDecimal newValue = stockRecord.getMengeIst().add(aenderung.multiply(BigDecimal.valueOf(-1)));
-        if (stockRecord.getMengeIst().compareTo(movementRecord.mengeGesamt()) != 0 && !List.of(MovementEreignis.BEWGAB, MovementEreignis.BEWGZU, MovementEreignis.BEWGNG).contains(movementRecord.ereignis())) {
-            errors.add(new StockError(StockError.ErrorType.MOVEMENT_ERROR, "Stock record " + stockRecord.getLfdNr() + " menge mismatch: " + movementRecord.lfdNr() + " (current=" + stockRecord.getMengeIst() + ", movement=" + movementRecord.mengeGesamt() + ", change=" + aenderung + ")", ""));
-            LOGGER.warn("Stock record {} menge mismatch for movement: {}, current: {}, movement: {}, change: {}", stockRecord.getLfdNr(), movementRecord.lfdNr(), stockRecord.getMengeIst(), movementRecord.mengeGesamt(), aenderung);
+        final BigDecimal change = Optional.ofNullable(movementRecord.quantityChange()).orElse(BigDecimal.ZERO);
+        final BigDecimal newValue = stockRecord.getQuantityOnHand().add(change.multiply(BigDecimal.valueOf(-1)));
+        if (stockRecord.getQuantityOnHand().compareTo(movementRecord.quantityTotal()) != 0
+                && !List.of(MovementEvent.MOVEMENT_OUT, MovementEvent.MOVEMENT_IN, MovementEvent.MOVEMENT_NEUTRAL).contains(movementRecord.event())) {
+            errors.add(new StockError(StockError.ErrorType.MOVEMENT_ERROR,
+                    "Stock record " + stockRecord.getSequenceNumber() + " quantity mismatch: " + movementRecord.sequenceNumber()
+                            + " (current=" + stockRecord.getQuantityOnHand() + ", movement=" + movementRecord.quantityTotal()
+                            + ", change=" + change + ")", ""));
+            LOGGER.warn("Stock record {} quantity mismatch for movement: {}, current: {}, movement: {}, change: {}",
+                    stockRecord.getSequenceNumber(), movementRecord.sequenceNumber(), stockRecord.getQuantityOnHand(), movementRecord.quantityTotal(), change);
         }
-        stockRecord.setMengeIst(newValue);
-        stockRecord.setPlatz(movementRecord.platz());
-        stockRecord.setLhmNr(movementRecord.lhmNr());
-        stockRecord.setPalNr((movementRecord.lhmNr()));
+        stockRecord.setQuantityOnHand(newValue);
+        stockRecord.setLocation(movementRecord.location());
+        stockRecord.setHandlingUnitNumber(movementRecord.handlingUnitNumber());
+        stockRecord.setPalletNumber(movementRecord.handlingUnitNumber());
     }
 
-    public StockRecord getStockRecord(int lfdNr) {
-        return stockRecords.get(lfdNr);
+    public StockRecord getStockRecord(int sequenceNumber) {
+        return stockRecords.get(sequenceNumber);
     }
 }

@@ -24,10 +24,10 @@ public record StockError(
         );
     }
 
-    public static StockError invalidEreignis(String csvLine, String value) {
+    public static StockError invalidEvent(String csvLine, String value) {
         return new StockError(
-                ErrorType.INVALID_EREIGNIS,
-                "Invalid ereignis value: " + value,
+                ErrorType.INVALID_EVENT,
+                "Invalid event value: " + value,
                 csvLine
         );
     }
@@ -86,7 +86,7 @@ public record StockError(
 
     public enum ErrorType {
         INVALID_FIELD_COUNT,
-        INVALID_EREIGNIS,
+        INVALID_EVENT,
         INVALID_NUMBER_FORMAT,
         INVALID_DATE_FORMAT,
         PARSE_ERROR,

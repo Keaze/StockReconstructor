@@ -20,14 +20,14 @@ class StockRecordFactoryTest {
         assertThat(result.isSuccessful()).isTrue();
 
         StockRecord stockRecord = result.getOrThrow();
-        assertThat(stockRecord.getLfdNr()).isEqualTo(9737);
-        assertThat(stockRecord.getArtikelNr()).isEqualTo("100773");
-        assertThat(stockRecord.getMandant()).isEqualTo(250);
-        assertThat(stockRecord.getPlatz()).isEqualTo("001020200807");
-        assertThat(stockRecord.getMengeIst()).isEqualByComparingTo(BigDecimal.valueOf(5.000));
-        assertThat(stockRecord.getInvDatum()).isEqualTo(LocalDate.parse("2025-10-22"));
-        assertThat(stockRecord.getInvZeit()).isEqualTo("11:23:44");
-        assertThat(stockRecord.getNeuUsr()).isEqualTo("IMP");
+        assertThat(stockRecord.getSequenceNumber()).isEqualTo(9737);
+        assertThat(stockRecord.getItemNumber()).isEqualTo("100773");
+        assertThat(stockRecord.getClient()).isEqualTo(250);
+        assertThat(stockRecord.getLocation()).isEqualTo("001020200807");
+        assertThat(stockRecord.getQuantityOnHand()).isEqualByComparingTo(BigDecimal.valueOf(5.000));
+        assertThat(stockRecord.getInventoryDate()).isEqualTo(LocalDate.parse("2025-10-22"));
+        assertThat(stockRecord.getInventoryTime()).isEqualTo("11:23:44");
+        assertThat(stockRecord.getCreatedUser()).isEqualTo("IMP");
     }
 
     @Test

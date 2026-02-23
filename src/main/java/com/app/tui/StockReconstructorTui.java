@@ -42,7 +42,7 @@ public class StockReconstructorTui {
             TextBox stockPath = new TextBox().setPreferredSize(new TerminalSize(60, 1));
             TextBox movementPath = new TextBox().setPreferredSize(new TerminalSize(60, 1));
             TextBox dateText = new TextBox().setPreferredSize(new TerminalSize(20, 1));
-            BasicWindow window = new BasicWindow("Stock Reconstructor") {
+            BasicWindow window = new BasicWindow("Stock Reconstruction") {
                 @Override
                 public boolean handleInput(KeyStroke key) {
                     if (key.getKeyType() == KeyType.Character && key.isAltDown()) {
@@ -74,7 +74,7 @@ public class StockReconstructorTui {
         panel.addComponent(new Label("Stock CSV"));
         panel.addComponent(stockPath);
 
-        panel.addComponent(new Label("Stockhistory CSV"));
+        panel.addComponent(new Label("Stock History CSV"));
         panel.addComponent(movementPath);
 
         panel.addComponent(new Label("Date (YYYY-MM-DD)"));
@@ -103,7 +103,7 @@ public class StockReconstructorTui {
             return;
         }
         if (!Files.exists(Path.of(movementPath))) {
-            MessageDialog.showMessageDialog(gui, "Invalid Path", "Stockhistory CSV file not found: " + movementPath);
+            MessageDialog.showMessageDialog(gui, "Invalid Path", "Stock history CSV file not found: " + movementPath);
             return;
         }
 
@@ -139,7 +139,7 @@ public class StockReconstructorTui {
                 if (movement != null && movement.isSuccessful()) {
                     MovementRecord record = movement.getOrThrow();
                     if (isMovementApplied(record, finalStockDate, finalizedStocks)) {
-                        appliedMovements.computeIfAbsent(record.bestandNr(), ignored -> new ArrayList<>()).add(record);
+                        appliedMovements.computeIfAbsent(record.stockNumber(), ignored -> new ArrayList<>()).add(record);
                     }
                 }
                 stockData.handleMovement(movement);
@@ -169,9 +169,9 @@ public class StockReconstructorTui {
         if (record == null) {
             return false;
         }
-        if (stockDate != null && record.datum() != null && record.datum().isBefore(stockDate)
-                && !finalizedStocks.contains(record.bestandNr())) {
-            finalizedStocks.add(record.bestandNr());
+        if (stockDate != null && record.date() != null && record.date().isBefore(stockDate)
+                && !finalizedStocks.contains(record.stockNumber())) {
+            finalizedStocks.add(record.stockNumber());
             return false;
         }
         return true;
@@ -238,7 +238,7 @@ public class StockReconstructorTui {
     }
 
     private Table<String> buildTable() {
-        Table<String> table = new Table<>("LFDNR", "ARTIKELNR", "MENGE_IST", "PLATZ", "LHMNR", "CHARGE1");
+        Table<String> table = new Table<>("SEQ", "ITEM_NUMBER", "QUANTITY", "LOCATION", "HANDLING_UNIT", "BATCH1");
         table.setSelectAction(() -> {
         });
         table.setCellSelection(true);
@@ -266,14 +266,14 @@ public class StockReconstructorTui {
         long total = stockData.getStockRecords().size();
         long filtered = stockData.getStockRecords().values().stream()
                 .filter(record -> matchesFilter(record, normalized))
-                .sorted(Comparator.comparing(StockRecord::getLfdNr, Comparator.nullsLast(Integer::compareTo)))
+                .sorted(Comparator.comparing(StockRecord::getSequenceNumber, Comparator.nullsLast(Integer::compareTo)))
                 .peek(record -> model.addRow(
-                        formatInt(record.getLfdNr()),
-                        formatString(record.getArtikelNr()),
-                        formatDecimal(record.getMengeIst()),
-                        formatString(record.getPlatz()),
-                        formatString(record.getLhmNr()),
-                        formatString(record.getCharge1())
+                        formatInt(record.getSequenceNumber()),
+                        formatString(record.getItemNumber()),
+                        formatDecimal(record.getQuantityOnHand()),
+                        formatString(record.getLocation()),
+                        formatString(record.getHandlingUnitNumber()),
+                        formatString(record.getBatch1())
                 ))
                 .count();
 
@@ -289,12 +289,12 @@ public class StockReconstructorTui {
             return true;
         }
         String haystack = String.join(" ",
-                formatInt(record.getLfdNr()),
-                formatString(record.getArtikelNr()),
-                formatDecimal(record.getMengeIst()),
-                formatString(record.getPlatz()),
-                formatString(record.getLhmNr()),
-                formatString(record.getCharge1())
+                formatInt(record.getSequenceNumber()),
+                formatString(record.getItemNumber()),
+                formatDecimal(record.getQuantityOnHand()),
+                formatString(record.getLocation()),
+                formatString(record.getHandlingUnitNumber()),
+                formatString(record.getBatch1())
         ).toLowerCase();
         return haystack.contains(normalized);
     }
@@ -305,18 +305,18 @@ public class StockReconstructorTui {
             return;
         }
         List<String> row = table.getTableModel().getRow(table.getSelectedRow());
-        Integer bestandNr = parseInteger(row.isEmpty() ? null : row.get(0));
-        if (bestandNr == null) {
+        Integer stockNumber = parseInteger(row.isEmpty() ? null : row.get(0));
+        if (stockNumber == null) {
             MessageDialog.showMessageDialog(gui, "Movements", "Unable to read selected stock.");
             return;
         }
-        List<MovementRecord> movements = appliedMovements.get(bestandNr);
+        List<MovementRecord> movements = appliedMovements.get(stockNumber);
         if (movements == null || movements.isEmpty()) {
-            MessageDialog.showMessageDialog(gui, "Movements", "No applied movements for stock " + bestandNr + ".");
+            MessageDialog.showMessageDialog(gui, "Movements", "No applied movements for stock " + stockNumber + ".");
             return;
         }
 
-        BasicWindow movementWindow = new BasicWindow("Movements for " + bestandNr) {
+        BasicWindow movementWindow = new BasicWindow("Movements for " + stockNumber) {
             @Override
             public boolean handleInput(KeyStroke key) {
                 if (key.getKeyType() == KeyType.Character && key.isAltDown()
@@ -330,18 +330,29 @@ public class StockReconstructorTui {
         Panel panel = new Panel(new LinearLayout(Direction.VERTICAL));
         panel.addComponent(new Label("Applied movements: " + movements.size()));
 
-        Table<String> movementTable = new Table<>("LFDNR", "EREIGNIS", "DATUM", "ZEIT", "MENGE_AENDERUNG", "MENGE_GESAMT", "PLATZ", "LHMNR", "CHARGE1", "USR");
+        Table<String> movementTable = new Table<>(
+                "SEQ",
+                "EVENT",
+                "DATE",
+                "TIME",
+                "QUANTITY_CHANGE",
+                "QUANTITY_TOTAL",
+                "LOCATION",
+                "HANDLING_UNIT",
+                "BATCH1",
+                "USER"
+        );
         movements.forEach(record -> movementTable.getTableModel().addRow(
-                formatInt(record.lfdNr()),
-                record.ereignis() == null ? "" : record.ereignis().name(),
-                record.datum() == null ? "" : record.datum().toString(),
-                formatString(record.zeit()),
-                formatDecimal(record.mengeAenderung()),
-                formatDecimal(record.mengeGesamt()),
-                formatString(record.platz()),
-                formatString(record.lhmNr()),
-                formatString(record.charge1()),
-                formatString(record.usr())
+                formatInt(record.sequenceNumber()),
+                record.event() == null ? "" : record.event().name(),
+                record.date() == null ? "" : record.date().toString(),
+                formatString(record.time()),
+                formatDecimal(record.quantityChange()),
+                formatDecimal(record.quantityTotal()),
+                formatString(record.location()),
+                formatString(record.handlingUnitNumber()),
+                formatString(record.batch1()),
+                formatString(record.user())
         ));
         movementTable.setVisibleRows(20);
         panel.addComponent(movementTable.withBorder(Borders.singleLine("Movements")));
@@ -371,10 +382,10 @@ public class StockReconstructorTui {
             }
         };
         Panel panel = new Panel(new LinearLayout(Direction.VERTICAL));
-        Table<String> table = new Table<>("Movement Errors");
+        Table<String> table = new Table<>("Errors");
         stockData.getErrors().forEach(error -> table.getTableModel().addRow(error.type() + ": " + error.message()));
         table.setVisibleRows(20);
-        panel.addComponent(table.withBorder(Borders.singleLine("Movement Errors")));
+        panel.addComponent(table.withBorder(Borders.singleLine("Errors")));
         panel.addComponent(new Button("Close", errorWindow::close));
         errorWindow.setComponent(panel);
         errorWindow.setHints(java.util.List.of(Window.Hint.CENTERED));
