@@ -7,11 +7,13 @@ how to build, test, and follow existing code conventions.
 
 ## Repo Summary
 
-- Language: Java (records, streams, Optional, BigDecimal, java.time)
+- Language: Java 17+ (records, streams, Optional, BigDecimal, java.time, switch expressions)
 - Build tool: Gradle Kotlin DSL (`build.gradle.kts`)
 - Tests: JUnit 5 + AssertJ
 - Error handling: custom `Result<R, E>` and `StockError`
-- Main packages: `com.app`, `com.app.stock`, `com.app.utils`
+- Logging: SLF4J + Logback
+- Lombok: `@Getter`, `@Setter`, `@Builder`, `@EqualsAndHashCode`, `@ToString`, `@AllArgsConstructor`
+- Main packages: `com.app`, `com.app.stock`, `com.app.history`, `com.app.utils`, `com.app.tui`
 
 ## Commands
 
@@ -54,6 +56,7 @@ Use the Gradle wrapper (`./gradlew` on Unix, `gradlew.bat` on Windows).
     3) `java.*`
 - Separate groups with a single blank line.
 - Static imports follow normal imports and are grouped at the end.
+- Static imports are used for utility classes (e.g., `CsvFieldUtils.*`).
 
 ### Naming
 
@@ -69,6 +72,7 @@ Use the Gradle wrapper (`./gradlew` on Unix, `gradlew.bat` on Windows).
 - Prefer `Integer`/`Long`/`BigDecimal` when null is a valid state.
 - Use primitives only when null is not allowed.
 - Parse helpers return `null` for empty/placeholder values; keep this behavior.
+- Use `Optional.ofNullable(...).orElse(...)` for nullable defaults.
 
 ### Error Handling
 
@@ -83,6 +87,12 @@ Use the Gradle wrapper (`./gradlew` on Unix, `gradlew.bat` on Windows).
 - Prefer stream pipelines for transformations but keep them readable.
 - Use `Collectors.toMap` with a merge function when keys might collide.
 - Avoid side effects inside stream operations.
+- Use `Result.sequence` for batch operations that return lists of results.
+
+### Enum and Switch
+
+- Use switch expressions for enum matching (Java 14+ style).
+- Example: `switch (movementRecord.event()) { case DELETE -> createStock(movementRecord); ... }`
 
 ### Records and Factories
 
@@ -96,10 +106,17 @@ Use the Gradle wrapper (`./gradlew` on Unix, `gradlew.bat` on Windows).
 - Keep date format constants in factories.
 - Return `null` for empty date values.
 
+### Placeholder Patterns
+
+- Underscore strings ("_".repeat(20) or "_".repeat(10)) are treated as empty/placeholder values in CSV parsing.
+- This pattern is checked in `CsvFieldUtils.parseInt`, `parseString`, and `parseLong`.
+
 ### Logging/IO
 
 - Use `try-with-resources` for file IO (`Files.lines`).
 - Convert IO problems into `Result.failure` with `StockError.parseError`.
+- Use SLF4J for logging with `LoggerFactory.getLogger(Class.class)` as private static final field.
+- Use appropriate log levels: INFO for normal operations, WARN for recoverable issues, ERROR for failures.
 
 ### Testing
 
@@ -112,7 +129,9 @@ Use the Gradle wrapper (`./gradlew` on Unix, `gradlew.bat` on Windows).
 - `src/main/java/com/app/utils/Result.java`: functional Result API with
   `success`/`failure`, `map`, `flatMap`, etc.
 - `src/main/java/com/app/utils/StockError.java`: centralized error types.
+- `src/main/java/com/app/utils/CsvFieldUtils.java`: CSV parsing utilities with static methods.
 - `src/main/java/com/app/stock/model/*Factory.java`: CSV parsing factories.
+- `src/main/java/com/app/stock/model/*Record.java`: Lombok-annotated records using Builder pattern.
 
 ## Cursor/Copilot Rules
 
